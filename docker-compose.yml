@@ -119,7 +119,7 @@ services:
       - sineklik-net
       - wordpress_default   # NPM bu network üzerinden ulaşır
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
       interval: 30s
       timeout: 5s
       retries: 3
