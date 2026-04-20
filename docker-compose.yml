@@ -3,6 +3,9 @@ version: '3.9'
 networks:
   sineklik-net:
     driver: bridge
+  # NPM'in bulunduğu dış network — sineklik-app bu network'e de katılır
+  wordpress_default:
+    external: true
 
 volumes:
   db-data:
@@ -13,8 +16,6 @@ services:
   db:
     image: supabase/postgres:15.8.1.060
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_HOST: /var/run/postgresql
       POSTGRES_PORT: 5432
@@ -55,11 +56,6 @@ services:
       GOTRUE_JWT_EXP: 3600
       GOTRUE_JWT_SECRET: ${JWT_SECRET}
       GOTRUE_MAILER_AUTOCONFIRM: "true"
-      GOTRUE_SMTP_ADMIN_EMAIL: admin@example.com
-      GOTRUE_SMTP_HOST: ""
-      GOTRUE_SMTP_PORT: 25
-      GOTRUE_SMTP_USER: ""
-      GOTRUE_SMTP_PASS: ""
     networks:
       - sineklik-net
 
@@ -87,8 +83,7 @@ services:
     image: kong:2.8.1
     restart: unless-stopped
     ports:
-      - "8000:8000/tcp"
-      - "8443:8443/tcp"
+      - "8300:8000/tcp"   # Supabase API dış portu
     depends_on:
       db:
         condition: service_healthy
@@ -117,13 +112,12 @@ services:
         SUPABASE_ANON_KEY: ${ANON_KEY}
     image: sineklik-teklif:latest
     container_name: sineklik-teklif
-    ports:
-      - "3001:80"
     restart: unless-stopped
     depends_on:
       - kong
     networks:
       - sineklik-net
+      - wordpress_default   # NPM bu network üzerinden ulaşır
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 30s
